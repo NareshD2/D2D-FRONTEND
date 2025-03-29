@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Navbar1 from './Navbar1';
-import {jwtDecode} from 'jwt-decode';
+import { jwtDecode } from 'jwt-decode';
 import './GoalSetting.css';
-
+import Cookies from 'js-cookie';
+import { useNavigate } from 'react-router-dom';
+import apiURL from '../utils';
 const GoalSetting = () => {
   const [goal, setGoal] = useState('');
   const [gid, setGid] = useState('');
@@ -11,37 +13,46 @@ const GoalSetting = () => {
   const [goalOptions, setGoalOptions] = useState([]);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const navigate = useNavigate();
 
   // Retrieve and decode token to get userId
-  const token = localStorage.getItem('token');
-  let userId;
+  const token = Cookies.get('session');
+  let userId = null;
 
   if (token) {
-    const decodedToken = jwtDecode(token);
-    userId = decodedToken.results && decodedToken.results[0].id; // Extract userId from results array
-    console.log("Decoded User ID:", userId); // Log for debugging; // Update 'id' based on your JWT payload structure
+    try {
+      const decodedToken = jwtDecode(token);
+      if (decodedToken && decodedToken.results && Array.isArray(decodedToken.results)) {
+        userId = decodedToken.results.length > 0 ? decodedToken.results[0].id : null;
+      }
+    } catch (error) {
+      console.error('Error decoding token:', error);
+    }
   }
 
   useEffect(() => {
     const fetchGoals = async () => {
       try {
-        const response = await fetch('http://localhost:5000/api/set-goal');
+        const response = await fetch(`${apiURL}/api/set-goal`);
+        if (!response.ok) {
+          throw new Error(`Failed to fetch goals. Status: ${response.status}`);
+        }
         const data = await response.json();
         setGoalOptions(data);
       } catch (error) {
-        setError('Failed to fetch goals');
+        setError(error.message || 'Failed to fetch goals');
       }
     };
 
     fetchGoals();
-    
-    // Example: Set default values for objective and targetDate, if required
-    setObjective('Initial Objective'); // replace with your desired initial value
-    setTargetDate(new Date().toISOString().split('T')[0]); // default to today's date in YYYY-MM-DD format
+
+    // Set default values for objective and targetDate
+    setObjective('Initial Objective');
+    setTargetDate(new Date().toISOString().split('T')[0]); // Defaults to today's date
   }, []);
 
   const handleGoalChange = (e) => {
-    const selectedGoalId = e.target.value;
+    const selectedGoalId = Number(e.target.value); // Convert to number
     const selectedGoal = goalOptions.find(goal => goal.id === selectedGoalId);
 
     setGid(selectedGoalId);
@@ -56,11 +67,16 @@ const GoalSetting = () => {
       return;
     }
 
+    if (!userId) {
+      setError('User authentication failed. Please log in again.');
+      return;
+    }
+
     setError('');
     setSuccessMessage('');
 
     try {
-      const response = await fetch('http://localhost:5000/api/set-goal', {
+      const response = await fetch(`${apiURL}/api/set-goal`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -74,18 +90,25 @@ const GoalSetting = () => {
         }),
       });
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch {
+        throw new Error('Invalid server response');
+      }
+
       if (response.ok) {
         setGid('');
         setGoal('');
         setObjective('');
         setTargetDate('');
         setSuccessMessage('Goal created successfully!');
+        navigate('/Userinterface')
       } else {
         setError(data.message || 'Failed to create goal');
       }
     } catch (error) {
-      setError('Server error');
+      setError(error.message || 'Server error');
     }
   };
 

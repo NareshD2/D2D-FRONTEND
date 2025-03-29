@@ -6,6 +6,31 @@ body {
     padding: 50px; /* Space for the navbar */
 }
 
+.back-button-container {
+    margin-bottom: 15px; /* Moves the button slightly down */
+  }
+  
+  .back-button {
+    background-color: rgb(210, 236, 220);
+    color: rgb(38, 107, 66);
+    width:15%;
+    height: 40px;
+   
+    padding-top: 100px;
+    padding: 20px;
+    margin-bottom: 20px;
+    font-size: 18px;
+    text-align: center;
+    border-radius: 8px;
+    position:relative;
+    margin-top: 20px; 
+    
+  }
+  
+  .back-button:hover {
+    background-color: #0a502e;
+  }
+  
 
 .progress-container {
     background-color: rgb(210, 236, 220);
@@ -21,6 +46,9 @@ body {
     border-radius: 8px;
     position:relative;
     margin-top: 20px; /* Space below the navbar */
+}
+.status-checkbox{
+    accent-color:#3e693e;
 }
 
 /* Small line on top of progress container */

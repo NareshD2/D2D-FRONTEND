@@ -2,47 +2,50 @@ import React, { useState } from 'react';
 import Navbar from './Navbar';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
-
+import './Customerlogin.css';
+import { ClipLoader } from 'react-spinners';
+import apiURL from '../utils';
 const CustomerLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (email === '' || password === '') {
+    if (!email || !password) {
       setErrorMessage('Please fill in both fields');
       return;
     }
-
+    setLoading(true); 
     try {
-      let response = await fetch('http://localhost:5000/api/Customerlogin', {
+      const response = await fetch(`${apiURL}/api/Customerlogin`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
-        credentials: 'include' 
+        credentials: 'include' // Ensures cookies are handled correctly
       });
 
-      response = await response.json();
-      console.warn(response);
+      if (!response.ok) {
+        throw new Error(`Login failed: ${response.statusText}`);
+      }
 
-      if (response.auth) {
-        
-        localStorage.setItem('results',JSON.stringify(response.results));
-        localStorage.setItem('token',JSON.stringify(response.auth));
-       
-       setErrorMessage(''); 
-        navigate('/Userinterface');
+      const data = await response.json();
+
+      if (data.auth) {
+        // Store the token in cookies
+        Cookies.set("session", data.auth, { expires: 1, secure: true, sameSite: "Strict" });
+
+        setErrorMessage("");
+        navigate("/Userinterface");
       } else {
-        
-        alert("enter correct details");
-        setErrorMessage("enter correct details");
+        setErrorMessage('Enter correct details');
       }
     } catch (error) {
-      setErrorMessage('An error occurred: ' + error.message);
+      setErrorMessage(`An error occurred: ${error.message}`);
+    }finally{
+      setLoading(false); 
     }
   };
 
@@ -55,7 +58,7 @@ const CustomerLogin = () => {
           <div className="form-group">
             <label htmlFor="email">Email</label>
             <input
-              type="text"
+              type="email"
               className="form-control"
               id="email"
               value={email}
@@ -74,8 +77,13 @@ const CustomerLogin = () => {
               required
             />
           </div>
-          <button type="submit" className="btn btn-primary login-btn">Submit</button>
+          <button type="submit" className="btn btn-primary login-btn"> {loading ? <ClipLoader size={20} color="#fff" /> : 'login'}</button>
           {errorMessage && <p className="error-text">{errorMessage}</p>}
+
+          {/* Back to Homepage Link */}
+          <p className="back-home">
+            <a href="/mainpage" className="back-home-link">Back to Homepage</a>
+          </p>
         </form>
       </div>
     </div>

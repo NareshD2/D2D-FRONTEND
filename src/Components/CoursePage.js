@@ -1,34 +1,47 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useNavigate } from 'react-router-dom';
 import './CousePage.css'; // Import CSS for styling
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import Navbar1 from './Navbar1';
+import apiURL from '../utils';
+
+// Function to fetch courses
+const fetchCourses = async () => {
+  const response = await fetch(`${apiURL}/courses`);
+  if (!response.ok) throw new Error('Failed to fetch courses');
+  return response.json();
+};
+
+// Custom Loader Component
+const Loader = () => (
+  <div className="loader-container">
+    <div className="spinner"></div>
+    <p>Loading Courses...</p>
+  </div>
+);
 
 const CoursesPage = () => {
-  const [courses, setCourses] = useState([]);
+  const navigate = useNavigate();
 
-  // Fetch courses from the API
-  useEffect(() => {
-    const fetchCourses = async () => {
-      try {
-        const response = await fetch('http://localhost:5000/courses');
-        const data = await response.json();
-        setCourses(data);
-      } catch (error) {
-        console.error('Error fetching courses:', error);
-      }
-    };
+  // Use React Query to fetch courses
+  const { data: courses, error, isLoading } = useQuery({
+    queryKey: ['courses'],
+    queryFn: fetchCourses,
+  });
 
-    fetchCourses();
-  }, []);
+  // Show loader while data is loading
+  if (isLoading) return <Loader />;
+  
+  // Handle error while fetching data
+  if (error) return <p className="error-message">Error fetching courses: {error.message}</p>;
 
   return (
     <div>
-      <Navbar1 />
       <div className="courses-container">
         <h1>Courses</h1>
         <div className="courses-grid">
           {courses.map((course) => (
-            <div className="course-card" key={course.cid} onClick={() => window.location.href = course.link}>
+            <div className="course-card" key={course.cid} onClick={() => navigate(course.link)}>
               <i className={course.icon}></i>
               <h3>{course.course_name}</h3>
             </div>

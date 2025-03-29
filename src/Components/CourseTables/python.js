@@ -1,30 +1,67 @@
 import React, { useEffect, useState } from 'react';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import './table.css';
-import Navbar1 from '../Navbar1';
-
+import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
+import { useNavigate } from 'react-router-dom';
+import apiURL from '../../utils';
 const Python = () => {
-  const [videos, setVideos] = useState([]); // State to store videos
+  const [videos, setVideos] = useState([]);
   const [activeVideo, setActiveVideo] = useState(null);
+  const [completedVideos, setCompletedVideos] = useState(new Set());
+  const navigate = useNavigate();
 
+  // Function to extract user ID from the JWT token
+  const getUserIdFromToken = () => {
+    const token = Cookies.get('session');
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        return decodedToken.results?.[0]?.id || null;
+      } catch (error) {
+        console.error('Error decoding token:', error);
+      }
+    }
+    return null;
+  };
+
+  const userId = getUserIdFromToken(); // Get user ID from the token
+  const cid = new URLSearchParams(window.location.search).get('cid'); // Get course ID from the URL
+  console.log(userId,cid);
+
+  // Fetch videos and progress data when the component mounts
   useEffect(() => {
-    // Fetch video data from the API
     const fetchVideos = async () => {
       const queryParams = new URLSearchParams(window.location.search);
       const cid = queryParams.get('cid');
-      const response = await fetch(`http://localhost:5000/api/${cid}`);
+      const response = await fetch(`${apiURL}/api/${cid}`);
       const data = await response.json();
       setVideos(data);
+     
+    };
+
+    const fetchProgress = async () => {
+      try {
+        const res = await fetch(`${apiURL}/progress/${userId}/${cid}`);
+        const completed = await res.json();
+        console.log('Fetched progress from backend:', completed); // Debugging
+        setCompletedVideos(new Set(completed)); // Initialize Set with the array
+      } catch (error) {
+        console.error('Error fetching progress:', error);
+      }
     };
 
     fetchVideos();
-  }, []);
+    fetchProgress();
+  }, [cid, userId]);
 
+  // Update progress bar when videos or completedVideos state changes
   useEffect(() => {
     const checkboxes = document.querySelectorAll('.status-checkbox');
     const progressText = document.getElementById('progress-text');
     const progressFill = document.getElementById('progress-fill');
     const progressLine = document.getElementById('progress-line');
+    
 
     function updateProgress() {
       const total = checkboxes.length;
@@ -47,9 +84,35 @@ const Python = () => {
         checkbox.removeEventListener('change', updateProgress);
       });
     };
-  }, [videos]);
+  }, [videos, completedVideos]);
 
-  // Function to extract the video ID from YouTube URL
+  // Handle checkbox change and update backend
+  const handleCheckboxChange = async (video) => {
+    setCompletedVideos((prev) => {
+      const updated = new Set(prev);
+  
+      if (updated.has(video.title)) {
+        updated.delete(video.title);
+      } else {
+        updated.add(video.title);
+      }
+  
+      // Send updated progress to backend
+      fetch(`${apiURL}/progress`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, cid, completedVideos: Array.from(updated)}),
+      })
+        .then(res => res.json())
+        .then(data => console.log('Progress updated:', data))
+        .catch(error => console.error('Error updating progress:', error));
+  
+      return updated;
+    });
+  };
+  
+
+  // Extract YouTube video ID from URL
   const getYouTubeID = (url) => {
     const videoId = url.split('v=')[1].split('&')[0];
     return videoId;
@@ -57,7 +120,12 @@ const Python = () => {
 
   return (
     <div>
-      <Navbar1 />
+      {/* Back button */}
+      <button className="back-button" onClick={() => navigate('/courses')}>
+        &larr; Back to Courses
+      </button>
+
+      {/* Progress bar */}
       <div className="progress-container" id="progress-container">
         <div className="progress-line" id="progress-line"></div>
         <span id="progress-text">0/{videos.length} tasks completed (0%)</span>
@@ -66,6 +134,7 @@ const Python = () => {
         </div>
       </div>
 
+      {/* Videos table */}
       <table>
         <thead>
           <tr>
@@ -80,11 +149,18 @@ const Python = () => {
           {videos.map((video, index) => (
             <tr key={index}>
               <td>{index + 1}</td>
-              <td><input type="checkbox" className="status-checkbox" /></td>
+              <td>
+                <input
+                  type="checkbox"
+                  className="status-checkbox"
+                  checked={completedVideos.has(video.title)}
+                  onChange={() => handleCheckboxChange(video)}
+                />
+              </td>
               <td>{video.title}</td>
               <td>
                 <button
-                  onClick={() => setActiveVideo(activeVideo === index ? null : index)} // Toggle video display
+                  onClick={() => setActiveVideo(activeVideo === index ? null : index)}
                   className="play-button"
                 >
                   <img
@@ -101,7 +177,7 @@ const Python = () => {
         </tbody>
       </table>
 
-      {/* Popup overlay for the embedded YouTube video */}
+      {/* Video modal */}
       {activeVideo !== null && (
         <div className="modal-overlay">
           <div className="modal-content">

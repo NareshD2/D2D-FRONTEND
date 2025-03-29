@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import Navbar from './Navbar';
-
 import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+
+import apiURL from '../utils';
 
 const Mentorlogin = () => {
   const [email, setEmail] = useState('');
@@ -17,7 +19,7 @@ const Mentorlogin = () => {
     }
 
     try {
-      let response = await fetch('http://localhost:5000/api/Mentorlogin', {
+      let response = await fetch(`${apiURL}/api/Mentorlogin`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
@@ -25,25 +27,26 @@ const Mentorlogin = () => {
         body: JSON.stringify({ email, password }),
         credentials: 'include' 
       });
+      if (!response.ok) {
+              throw new Error(`Login failed: ${response.statusText}`);
+            }
+      
+            const data = await response.json();
+      
+            if (data.auth) {
+              // Store the token in cookies
+              Cookies.set("session", data.auth, { expires: 1, secure: true, sameSite: "Strict" });
+      
+              setErrorMessage("");
+              navigate("/Mentorinterface");
+            } else {
+              setErrorMessage('Enter correct details');
+            }
+          } catch (error) {
+            setErrorMessage(`An error occurred: ${error.message}`);
+          }
 
-      response = await response.json();
-      console.warn(response);
-
-      if (response.auth) {
-        
-        localStorage.setItem('results',JSON.stringify(response.results));
-        localStorage.setItem('token',JSON.stringify(response.auth));
-       
-       setErrorMessage(''); 
-        navigate('/mentorinterface');
-      } else {
-        
-        alert("enter correct details");
-        setErrorMessage("enter correct details");
-      }
-    } catch (error) {
-      setErrorMessage('An error occurred: ' + error.message);
-    }
+      
   };
 
   return (
@@ -75,6 +78,9 @@ const Mentorlogin = () => {
             />
           </div>
           <button type="submit" className="btn btn-primary login-btn">Submit</button>
+          <p className="back-home">
+            <a href="/mainpage" className="back-home-link">Back to Homepage</a>
+          </p>
           {errorMessage && <p className="error-text">{errorMessage}</p>}
         </form>
       </div>

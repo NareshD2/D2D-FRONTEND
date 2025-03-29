@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import './MentorPosts.css';
-import Navbar2 from './Navbar2';
+import apiURL from '../utils';
 
 function MentorPosts() {
   const [title, setTitle] = useState('');
@@ -9,14 +9,22 @@ function MentorPosts() {
   const [message, setMessage] = useState('');
   const [showPopup, setShowPopup] = useState(false); // New state for popup visibility
 
+
+  const handleClose = () => {
+    setShowPopup(false);
+  };
+
   const handlePostJob = async () => {
     if (!title || !description) {
       setMessage("Title and description are required.");
       return;
     }
+    setMessage("Job alert posted successfully.");
+    setShowPopup(true); 
+    setTimeout(() => setShowPopup(false), 3000);
 
     try {
-      const response = await fetch('http://localhost:5000/MentorPosts', {
+      const response = await fetch(`${apiURL}/MentorPosts`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -25,7 +33,7 @@ function MentorPosts() {
       });
 
       if (response.ok) {
-        setMessage("Job alert posted successfully.");
+        setMessage("Job1 alert posted successfully.");
         setShowPopup(true); // Show popup on success
         setTitle('');
         setDescription('');
@@ -42,7 +50,7 @@ function MentorPosts() {
 
   return (
     <div className="dashboard-container">
-      <Navbar2 />
+     
       <h2>Post a Job Alert</h2>
       <div className="form-group">
         <label>Job Title</label>
@@ -76,11 +84,12 @@ function MentorPosts() {
       {/* Popup */}
       {showPopup && (
         <div className="popup">
-          <div className="popup-content">
-            <span className="checkmark">✔️</span>
-            <p>Job alert posted successfully!</p>
-          </div>
+        <div className="popup-content">
+          <button className="close-btn" onClick={handleClose}>&times;</button>
+          <span className="checkmark">✔️</span>
+          <p>Job alert posted successfully!</p>
         </div>
+      </div>
       )}
     </div>
   );

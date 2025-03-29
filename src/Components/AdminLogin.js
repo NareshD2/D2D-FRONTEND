@@ -1,13 +1,15 @@
 import React, { useState } from 'react';
-import './AdminLogin.css';
 import Navbar from './Navbar';
+import { useNavigate } from 'react-router-dom';
+import Cookies from 'js-cookie';
+import './Customerlogin.css';
+import apiURL from '../utils';
 
 const AdminLogin = () => {
-  const [showLoginForm, setShowLoginForm] = useState(true);
-  const [email, setemail] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -17,69 +19,71 @@ const AdminLogin = () => {
     }
 
     try {
-      const response = await fetch('http://localhost:5000/api/Adminlogin', {
+      let response = await fetch(`${apiURL}/api/Adminlogin`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': 'application/json'
         },
-        body: JSON.stringify({
-          email,
-          password,
-        }),
+        body: JSON.stringify({ email, password }),
+        credentials: 'include' 
       });
+      if (!response.ok) {
+                    throw new Error(`Login failed: ${response.statusText}`);
+                  }
+            
+                  const data = await response.json();
+            
+                  if (data.auth) {
+                    // Store the token in cookies
+                    Cookies.set("session", data.auth, { expires: 1, secure: true, sameSite: "Strict" });
+            
+                    setErrorMessage("");
+                    navigate("/Admininterface");
+                  } else {
+                    setErrorMessage('Enter correct details');
+                  }
+                } catch (error) {
+                  setErrorMessage(`An error occurred: ${error.message}`);
+                }
 
-      const data = await response.json();
-
-      if (response.status === 200) {
-        setIsLoggedIn(true);
-        setErrorMessage('');
-        // Redirect to admin dashboard or perform further actions
-      } else {
-        setErrorMessage(data.message);
-        setIsLoggedIn(false);
-      }
-    } catch (error) {
-      setErrorMessage('An error occurred: ' + error.message);
-    }
+      
   };
 
   return (
     <div>
-      {/* Navbar stays fixed */}
-      <Navbar/>
-
-      {/* Sliding form */}
-      {showLoginForm && (
-        <div className="login-form-container">
-          <form onSubmit={handleSubmit} className="login-form">
-            <h2>Admin Login</h2>
-            <div className="form-group">
-              <label htmlFor="email">Email</label>
-              <input
-                type="text"
-                className="form-control"
-                id="email"
-                value={email}
-                onChange={(e) => setemail(e.target.value)}
-                required
-              />
-            </div>
-            <div className="form-group">
-              <label htmlFor="password">Password</label>
-              <input
-                type="password"
-                className="form-control"
-                id="password"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-              />
-            </div>
-            <button type="submit" className="btn btn-primary login-btn">Submit</button>
-            {errorMessage && <p className="error-text">{errorMessage}</p>}
-          </form>
-        </div>
-      )}
+      <Navbar />
+      <div className="login-form-container">
+        <form onSubmit={handleSubmit} className="login-form">
+          <h2>Admin Login</h2>
+          <div className="form-group">
+            <label htmlFor="email">Email</label>
+            <input
+              type="text"
+              className="form-control"
+              id="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label htmlFor="password">Password</label>
+            <input
+              type="password"
+              className="form-control"
+              id="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+            />
+          </div>
+          <button type="submit" className="btn btn-primary login-btn">Submit</button>
+          <p className="back-home">
+            <a href="/mainpage" className="back-home-link">Back to Homepage</a>
+          </p>
+          {errorMessage && <p className="error-text">{errorMessage}</p>}
+        </form>
+      </div>
     </div>
   );
 };

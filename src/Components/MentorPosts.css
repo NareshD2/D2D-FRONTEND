@@ -42,7 +42,7 @@
   input[type="text"]:focus,
   input[type="url"]:focus,
   textarea:focus {
-    border-color: #007bff;
+    border-color: #0f643e;
   }
   
   textarea {

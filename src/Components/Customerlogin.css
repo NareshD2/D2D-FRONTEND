@@ -1,0 +1,64 @@
+/* Slide-in animation */
+@keyframes slideInFromTop {
+    0% {
+      transform: translateY(-100%);
+      opacity: 0;
+    }
+    100% {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+  
+  /* Container to center the form */
+  .login-form-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background-color: #f8f9fa;
+    padding: 1rem;
+  }
+  
+  /* Styling for the form with animation */
+  .login-form {
+    width: 100%;
+    max-width: 400px;
+    padding: 2rem;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    animation: slideInFromTop 0.8s ease-out; /* Animation applied here */
+  }
+  
+  /* Styling for form inputs */
+  .form-control {
+    width: 100%;
+    padding: 0.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #ced4da;
+    border-radius: 4px;
+  }
+  
+  /* Submit button */
+  .login-btn {
+    width: 100%;
+    padding: 0.5rem;
+    background-color: #007bff;
+    border: none;
+    color: #fff;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+  
+  .login-btn:hover {
+    background-color: #0056b3;
+  }
+  
+  /* Error message styling */
+  .error-text {
+    color: red;
+    margin-top: 1rem;
+    text-align: center;
+  }
+  

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import Navbar1 from './Navbar1';
-
+import apiURL from '../utils';
 function Userjobalerts() {
   const [jobAlerts, setJobAlerts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -9,7 +9,7 @@ function Userjobalerts() {
   useEffect(() => {
     const fetchJobAlerts = async () => {
       try {
-        const response = await fetch('http://localhost:5000/Userjobalerts');
+        const response = await fetch(`${apiURL}/Userjobalerts`);
         if (response.ok) {
           const data = await response.json();
           setJobAlerts(data);

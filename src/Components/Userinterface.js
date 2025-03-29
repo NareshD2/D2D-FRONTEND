@@ -1,57 +1,71 @@
 import React, { useEffect, useState } from 'react';
 import './Userinterface.css';
 import Navbar1 from './Navbar1';
- // Ensure the file name is correct
 import '@fortawesome/fontawesome-free/css/all.min.css';
-import {jwtDecode} from 'jwt-decode'; // Use default import for jwt-decode
+import Cookies from 'js-cookie';
+import { jwtDecode } from 'jwt-decode';
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-
+import { useNavigate } from 'react-router-dom';
+import apiURL from '../utils';
 const Userinterface = () => {
-  const courseProgress = 85;
-  const labProgress = 10;
-  const assignmentProgress = 60;
+  const navigate = useNavigate();
+  const courseProgress = 20;
+  const labProgress = 5;
+  const assignmentProgress = 3;
 
-  const [goals, setGoals] = useState([]); // State to store fetched goals
-  const [courses, setCourses] = useState([]);
+  const [goals, setGoals] = useState([]);
+  const [goalCourses, setGoalCourses] = useState({});
 
   const getUserIdFromToken = () => {
-    const token = localStorage.getItem('token');
+    const token = Cookies.get('session');
     if (token) {
-      const decodedToken = jwtDecode(token);
-      return decodedToken.results && decodedToken.results[0].id;
+      try {
+        const decodedToken = jwtDecode(token);
+        return decodedToken.results?.[0]?.id || null;
+      } catch (error) {
+        console.error('Error decoding token:', error);
+      }
     }
     return null;
   };
 
   useEffect(() => {
-    const fetchCourses = async () => {
+    const fetchData = async () => {
+      const userId = getUserIdFromToken();
+      if (!userId) return;
+
       try {
-        const userId = getUserIdFromToken();
-        if (userId) {
-          const response = await fetch(`http://localhost:5000/courses1/${userId}`);
-          const data = await response.json();
-          setCourses(data);
-        }
+        const goalsResponse = await fetch(`${apiURL}/api/goals/${userId}`);
+        const goalsData = await goalsResponse.json();
+      
+        setGoals(goalsData.goals || []);
+
+        // Fetch courses for all goals in parallel
+        const coursesMap = {};
+        const courseFetches = goalsData.goals.map(async (goal) => {
+          try {
+            const response = await fetch(`${apiURL}/courses1/${goal.goal_name}`);
+            if (!response.ok) {
+              console.error(`Error fetching courses for ${goal.goal_name}:`, response.statusText);
+              return;
+            }
+            const data = await response.json();
+            coursesMap[goal.goal_name] = data || [];
+          } catch (error) {
+            console.error(`Error fetching courses for ${goal.goal_name}:`, error);
+          }
+        });
+
+        await Promise.all(courseFetches); // Wait for all fetch requests to complete
+        setGoalCourses(coursesMap); // Update state once with all course data
+
       } catch (error) {
-        console.error('Error fetching courses:', error);
+        console.error('Error fetching data:', error);
       }
     };
 
-    fetchCourses();
-  }, []);
-
-  // Fetch goals from the backend
-  useEffect(() => {
-    const userId = getUserIdFromToken();
-    if (userId) {
-      fetch(`http://localhost:5000/api/goals/${userId}`)
-        .then((response) => response.json())
-        .then((data) => {
-          setGoals(data.goals || []); // Handle response structure
-        })
-        .catch((error) => console.error("Error fetching goals:", error));
-    }
+    fetchData();
   }, []);
 
   return (
@@ -63,10 +77,7 @@ const Userinterface = () => {
           <CircularProgressbar
             value={courseProgress}
             text={`${courseProgress}%`}
-            styles={buildStyles({
-              pathColor: 'green',
-              textColor: 'green',
-            })}
+            styles={buildStyles({ pathColor: 'green', textColor: 'green' })}
           />
           <div className="ui-labels">progress</div>
         </div>
@@ -76,10 +87,7 @@ const Userinterface = () => {
           <CircularProgressbar
             value={labProgress}
             text={`${labProgress}%`}
-            styles={buildStyles({
-              pathColor: 'green',
-              textColor: 'green',
-            })}
+            styles={buildStyles({ pathColor: 'green', textColor: 'green' })}
           />
           <div className="ui-labels">progress</div>
         </div>
@@ -89,39 +97,37 @@ const Userinterface = () => {
           <CircularProgressbar
             value={assignmentProgress}
             text={`${assignmentProgress}%`}
-            styles={buildStyles({
-              pathColor: 'green',
-              textColor: 'green',
-            })}
+            styles={buildStyles({ pathColor: 'green', textColor: 'green' })}
           />
           <div className="ui-labels">progress</div>
         </div>
       </div>
 
-      {/* New Registered Goals Container */}
-      <div className="registered-goals-container">
-        <h2>Registered Goals</h2>
+      {/* Goals and Corresponding Courses Section */}
+      <div className="goal-course-container">
         {goals.length > 0 ? (
-          goals.map((goal, index) => (
-            <div key={index} className="goal-item">
-              <span className="goal-title">{goal.goal_name}</span>
+          goals.map((goal) => (
+            <div key={goal.goal_name} className="goal-section">
+              <h2>{goal.goal_name}</h2>
+              {goalCourses[goal.goal_name]?.length >=0 ? (
+                <div className="courses-grid">
+                  {goalCourses[goal.goal_name].map((course) => (
+                    
+                    <div className="course-card" key={course.cid} onClick={() => navigate(course.link)}>
+                    <i className={course.icon}></i>
+                    <h3>{course.course_name}</h3>
+                  </div>
+                  
+                  ))}
+                </div>
+              ) : (
+                <p>No courses assigned for this goal.</p>
+              )}
             </div>
           ))
         ) : (
-          <p>No registered goals found.</p>
+          <p>No goals registered.</p>
         )}
-      </div>
-
-      <div className="courses-container">
-        <h1>Courses</h1>
-        <div className="courses-grid">
-          {courses.map((course) => (
-            <div className="course-card" key={course.cid} onClick={() => window.location.href = course.link}>
-              <i className={course.icon}></i>
-              <h3>{course.course_name}</h3>
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );

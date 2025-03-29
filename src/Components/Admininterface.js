@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import './Userinterface.css';
+import Cookies from 'js-cookie';
 import apiURL from '../utils';
+
  // Ensure the file name is correct
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import {jwtDecode} from 'jwt-decode'; // Use default import for jwt-decode
 import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
-import Cookies from 'js-cookie';
-const Mentorinterface = () => {
+
+
+const Admininterface = () => {
   const courseProgress = 85;
   const labProgress = 10;
   const assignmentProgress = 60;
@@ -56,9 +59,10 @@ const Mentorinterface = () => {
 
   return (
     <div className="progress-page1">
-     <p>welcome to the drive to destiny</p>
+   
+      <h1>Welcome To Drive to Destiny</h1>
     </div>
   );
 };
 
-export default Mentorinterface;
+export default Admininterface;
