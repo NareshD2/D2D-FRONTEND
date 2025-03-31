@@ -1,2 +1,2 @@
-const apiURL = "http://ip-12-0-130-196.ap-south-1.compute.internal:3200";
+const apiURL = "http://d2dbackendbalancer-2235bf3446e31981.elb.ap-south-1.amazonaws.com";
 export default apiURL;
