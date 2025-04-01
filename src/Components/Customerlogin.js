@@ -35,7 +35,7 @@ const CustomerLogin = () => {
 
       if (data.auth) {
         // Store the token in cookies
-        Cookies.set("session", data.auth, { expires: 1, secure: true, sameSite: "Strict" });
+        Cookies.set("session", data.auth, { expires: 1, secure: false, sameSite: "None" });
 
         setErrorMessage("");
         navigate("/Userinterface");
