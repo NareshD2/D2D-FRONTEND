@@ -5,6 +5,8 @@ import './GoalSetting.css';
 import Cookies from 'js-cookie';
 import { useNavigate } from 'react-router-dom';
 import apiURL from '../utils';
+import { FaCheckCircle, FaExclamationCircle } from 'react-icons/fa'; 
+import { ClipLoader } from 'react-spinners'; 
 const GoalSetting = () => {
   const [goal, setGoal] = useState('');
   const [gid, setGid] = useState('');
@@ -14,6 +16,11 @@ const GoalSetting = () => {
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const navigate = useNavigate();
+  const [errorMessage, setErrorMessage] = useState('');
+  const [isPopupVisible, setIsPopupVisible] = useState(false);
+  const [popupType, setPopupType] = useState('');
+  const [popupMessage, setPopupMessage] = useState('');
+  const [loading, setLoading] = useState(false);
 
   // Retrieve and decode token to get userId
   const token = Cookies.get('session');
@@ -46,13 +53,16 @@ const GoalSetting = () => {
 
     fetchGoals();
 
-    // Set default values for objective and targetDate
+    
     setObjective('Initial Objective');
-    setTargetDate(new Date().toISOString().split('T')[0]); // Defaults to today's date
+    setTargetDate(new Date().toISOString().split('T')[0]); 
   }, []);
+  const closePopup = () => {
+    setIsPopupVisible(false);
+  };
 
   const handleGoalChange = (e) => {
-    const selectedGoalId = Number(e.target.value); // Convert to number
+    const selectedGoalId = Number(e.target.value); 
     const selectedGoal = goalOptions.find(goal => goal.id === selectedGoalId);
 
     setGid(selectedGoalId);
@@ -61,17 +71,14 @@ const GoalSetting = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!gid || !objective.trim() || !targetDate) {
       setError('Please fill in all fields');
       return;
     }
-
     if (!userId) {
       setError('User authentication failed. Please log in again.');
       return;
     }
-
     setError('');
     setSuccessMessage('');
 
@@ -89,6 +96,31 @@ const GoalSetting = () => {
           objective,
         }),
       });
+      if (response.status === 200) {
+        setPopupType('success');
+        setPopupMessage('Goal Registered Successfully');
+        setIsPopupVisible(true);
+        setErrorMessage('');
+        setGid('');
+        setGoal('');
+        setObjective('');
+        setTargetDate('');
+        navigate('/userinterface');
+         
+
+        
+      } else if (response.status === 400) {
+        setPopupType('error');
+        setPopupMessage('You have already registered the goal');
+        setIsPopupVisible(true);
+        setErrorMessage('');
+        setGid('');
+        setGoal('');
+        setObjective('');
+        setTargetDate('');
+      } else {
+        setErrorMessage(data.message);
+      }
 
       let data;
       try {
@@ -96,25 +128,16 @@ const GoalSetting = () => {
       } catch {
         throw new Error('Invalid server response');
       }
-
-      if (response.ok) {
-        setGid('');
-        setGoal('');
-        setObjective('');
-        setTargetDate('');
-        setSuccessMessage('Goal created successfully!');
-        navigate('/Userinterface')
-      } else {
-        setError(data.message || 'Failed to create goal');
-      }
     } catch (error) {
       setError(error.message || 'Server error');
     }
   };
 
   return (
+    <div>
+       <Navbar1 />
     <div className="goal-setting-container">
-      <Navbar1 />
+     
       <h2>Set Your Goal</h2>
       {error && <p className="error">{error}</p>}
       {successMessage && <p className="success">{successMessage}</p>}
@@ -151,6 +174,24 @@ const GoalSetting = () => {
         <br />
         <button type="submit">Create Goal</button>
       </form>
+    </div>
+    {isPopupVisible && (
+            <div className={`popup ${popupType === 'success' ? 'popup-success' : 'popup-error'}`}>
+              <div className="popup-content">
+                <span className="close-btn" onClick={closePopup}>&times;</span>
+                <div className="popup-icon">
+                  {popupType === 'success' ? (
+                    <FaCheckCircle size={50} color="green" />
+                  ) : (
+                    <FaExclamationCircle size={50} color="red" />
+                  )}
+                </div>
+                <p>{popupMessage}</p>
+              </div>
+            </div>
+          )}
+      
+    
     </div>
   );
 };

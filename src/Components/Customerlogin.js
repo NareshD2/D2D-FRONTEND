@@ -5,6 +5,7 @@ import Cookies from 'js-cookie';
 import './Customerlogin.css';
 import { ClipLoader } from 'react-spinners';
 import apiURL from '../utils';
+import {Link} from 'react-router-dom';
 const CustomerLogin = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -35,10 +36,10 @@ const CustomerLogin = () => {
 
       if (data.auth) {
         // Store the token in cookies
-        Cookies.set("session", data.auth, { expires: 1, secure: true, sameSite: "Strict" });
+        Cookies.set("session", data.auth, { expires: 1, sameSite: "Strict" });
 
         setErrorMessage("");
-        navigate("/Userinterface");
+        navigate("/Userinterface",{ replace: true });
       } else {
         setErrorMessage('Enter correct details');
       }
@@ -82,7 +83,7 @@ const CustomerLogin = () => {
 
           {/* Back to Homepage Link */}
           <p className="back-home">
-            <a href="/mainpage" className="back-home-link">Back to Homepage</a>
+          <Link to="/mainpage">Back to Homepage</Link> 
           </p>
         </form>
       </div>

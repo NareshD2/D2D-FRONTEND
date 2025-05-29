@@ -4,11 +4,18 @@ import {jwtDecode} from 'jwt-decode';
 import './SubmitAssignment.css';
 import Cookies from 'js-cookie';
 import apiURL from '../utils';
-
+import { FaRegCopy } from 'react-icons/fa';
 const SubmitAssignment = () => {
     const [assignments, setAssignments] = useState([]);
     const [uploadLink, setUploadLink] = useState('');
     const [submittedAssignments, setSubmittedAssignments] = useState(new Set());
+    const [copiedId, setCopiedId] = useState(null);
+
+    const handleCopy = (refLink, id) => {
+        navigator.clipboard.writeText(refLink);
+        setCopiedId(id);
+        setTimeout(() => setCopiedId(null), 2000); // message disappears after 2 sec
+    };
 
     const token = Cookies.get('session');
   let userId;
@@ -37,7 +44,7 @@ const SubmitAssignment = () => {
             setSubmittedAssignments(new Set(data1.map(item => item.assignment_id))); 
         }
         fetchuploaded();
-    }, []);
+    }, [submittedAssignments]);
 
     const handleSubmit = async (assignmentId) => {
         if (!uploadLink) {
@@ -51,41 +58,61 @@ const SubmitAssignment = () => {
         });
         alert('Assignment submitted');
         setSubmittedAssignments((prev) => new Set([...prev, assignmentId]));
-        setUploadLink(''); // Clear the link input after submission
+        setUploadLink(''); 
     };
 
     return (
+       
         <div className="submit-assignment-container">
-            <Navbar1 />
-            <h2>Submit Assignment</h2>
-            <input 
-                type="text"
-                placeholder="Google Drive Link" 
-                className="upload-link-input"
-                value={uploadLink}
-                onChange={(e) => setUploadLink(e.target.value)} 
-            />
-            <div className="assignments-list">
-                {assignments.map((assignment) => (
-                    <div 
-                        key={assignment.assignment_id} 
-                        className={`assignment-card ${submittedAssignments.has(assignment.assignment_id) ? 'submitted' : ''}`}
-                    >
-                        <div className="assignment-content">
-                            <h3>{assignment.title}</h3>
-                            <p>Due Date: {assignment.due_date}</p>
-                        </div>
-                        <button 
-                            onClick={() => handleSubmit(assignment.assignment_id)}
-                            disabled={submittedAssignments.has(assignment.assignment_id)}
-                            className="submit-button"
-                        >
-                            {submittedAssignments.has(assignment.assignment_id) ? 'Submitted' : 'Submit Assignment'}
-                        </button>
-                    </div>
-                ))}
+    <Navbar1 />
+    <h2>Submit Assignment</h2>
+    <input 
+        type="text"
+        placeholder="Google Drive Link" 
+        className="upload-link-input"
+        value={uploadLink}
+        onChange={(e) => setUploadLink(e.target.value)} 
+    />
+    <div className="assignments-list">
+        {assignments.map((assignment) => (
+            <div 
+                key={assignment.assignment_id} 
+                className={`assignment-card ${submittedAssignments.has(assignment.assignment_id) ? 'submitted' : ''}`}
+            >
+                <div className="assignment-content">
+                    <h3>{assignment.title}</h3>
+                    <p>Due Date: {assignment.due_date}</p>
+                </div>
+
+                {/* Reference material link */}
+                <div className="ref-material">
+                <small>
+                    Ref Material: 
+                    <span className="ref-link-container">
+                        <code className="ref-link">{assignment.reference_m}</code>
+                        <FaRegCopy 
+                            className="copy-icon" 
+                            onClick={() => handleCopy(assignment.reference_m, assignment.assignment_id)}
+                        />
+                    </span>
+                </small>
+                {copiedId === assignment.assignment_id && (
+                    <div className="copy-message">Link copied!</div>
+                )}
             </div>
-        </div>
+
+                <button 
+                    onClick={() => handleSubmit(assignment.assignment_id)}
+                    disabled={submittedAssignments.has(assignment.assignment_id)}
+                    className="submit-button"
+                >
+                    {submittedAssignments.has(assignment.assignment_id) ? 'Submitted' : 'Submit Assignment'}
+                </button>
+            </div>
+        ))}
+    </div>
+</div>
+
     );
 };
 

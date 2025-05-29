@@ -8,14 +8,15 @@ import { CircularProgressbar, buildStyles } from 'react-circular-progressbar';
 import 'react-circular-progressbar/dist/styles.css';
 import { useNavigate } from 'react-router-dom';
 import apiURL from '../utils';
+
 const Userinterface = () => {
   const navigate = useNavigate();
-  const courseProgress = 20;
-  const labProgress = 5;
-  const assignmentProgress = 3;
+  const labProgress = 0;
+  const assignmentProgress = 0;
 
   const [goals, setGoals] = useState([]);
   const [goalCourses, setGoalCourses] = useState({});
+  const [overallGoalProgress, setOverallGoalProgress] = useState(0);
 
   const getUserIdFromToken = () => {
     const token = Cookies.get('session');
@@ -38,12 +39,24 @@ const Userinterface = () => {
       try {
         const goalsResponse = await fetch(`${apiURL}/api/goals/${userId}`);
         const goalsData = await goalsResponse.json();
-      
-        setGoals(goalsData.goals || []);
 
-        // Fetch courses for all goals in parallel
+        const goalsArray = goalsData.goals || [];
+        setGoals(goalsArray);
+
+        if (goalsArray.length > 0) {
+          const validProgresses = goalsArray
+    .map(goal => Number(goal.goal_progress ?? 0));
+          //const totalProgress = validProgresses.reduce((sum, goal) => sum + (goal.goal_progress || 0), 0);
+          const totalProgress = validProgresses.reduce((sum, progress) => sum + progress, 0);
+
+          const averageProgress = totalProgress / validProgresses.length;
+          setOverallGoalProgress(averageProgress);
+        } else {
+          setOverallGoalProgress(0);
+        }
+
         const coursesMap = {};
-        const courseFetches = goalsData.goals.map(async (goal) => {
+        const courseFetches = goalsArray.map(async (goal) => {
           try {
             const response = await fetch(`${apiURL}/courses1/${goal.goal_name}`);
             if (!response.ok) {
@@ -57,8 +70,8 @@ const Userinterface = () => {
           }
         });
 
-        await Promise.all(courseFetches); // Wait for all fetch requests to complete
-        setGoalCourses(coursesMap); // Update state once with all course data
+        await Promise.all(courseFetches);
+        setGoalCourses(coursesMap);
 
       } catch (error) {
         console.error('Error fetching data:', error);
@@ -71,12 +84,13 @@ const Userinterface = () => {
   return (
     <div className="progress-page1">
       <Navbar1 />
+
       <div className="progress-container-row">
         <div className="progress-item">
-          <h2>Courses</h2>
+          <h2>Goals Progress</h2>
           <CircularProgressbar
-            value={courseProgress}
-            text={`${courseProgress}%`}
+            value={overallGoalProgress}
+            text={`${Math.round(overallGoalProgress)}%`}
             styles={buildStyles({ pathColor: 'green', textColor: 'green' })}
           />
           <div className="ui-labels">progress</div>
@@ -103,30 +117,45 @@ const Userinterface = () => {
         </div>
       </div>
 
-      {/* Goals and Corresponding Courses Section */}
       <div className="goal-course-container">
         {goals.length > 0 ? (
           goals.map((goal) => (
             <div key={goal.goal_name} className="goal-section">
-              <h2>{goal.goal_name}</h2>
-              {goalCourses[goal.goal_name]?.length >=0 ? (
+              <div className="goal-header">
+                <h2 className="goal-title">{goal.goal_name}</h2>
+                <div className="progress-wrapper goal-progress-wrapper">
+                  <CircularProgressbar
+                    value={goal.goal_progress}
+                    text={`${goal.goal_progress}%`}
+                    styles={buildStyles({
+                      pathColor: '#4CAF50',
+                      textColor: '#4CAF50',
+                      trailColor: '#ddd',
+                    })}
+                  />
+                </div>
+              </div>
+
+              {goalCourses[goal.goal_name]?.length > 0 ? (
                 <div className="courses-grid">
                   {goalCourses[goal.goal_name].map((course) => (
-                    
-                    <div className="course-card" key={course.cid} onClick={() => navigate(course.link)}>
-                    <i className={course.icon}></i>
-                    <h3>{course.course_name}</h3>
-                  </div>
-                  
+                    <div
+                      className="course-card"
+                      key={course.cid}
+                      onClick={() => navigate(course.link)}
+                    >
+                      <i className={`${course.icon} course-icon`}></i>
+                      <h3 className="course-title">{course.course_name}</h3>
+                    </div>
                   ))}
                 </div>
               ) : (
-                <p>No courses assigned for this goal.</p>
+                <p className="no-courses">No courses assigned for this goal.</p>
               )}
             </div>
           ))
         ) : (
-          <p>No goals registered.</p>
+          <p className="no-goals">No goals registered.</p>
         )}
       </div>
     </div>

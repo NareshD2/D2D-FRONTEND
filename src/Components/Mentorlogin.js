@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import Navbar from './Navbar';
 import { useNavigate } from 'react-router-dom';
 import Cookies from 'js-cookie';
-
+import {Link} from 'react-router-dom';
 import apiURL from '../utils';
 
 const Mentorlogin = () => {
@@ -35,10 +35,10 @@ const Mentorlogin = () => {
       
             if (data.auth) {
               // Store the token in cookies
-              Cookies.set("session", data.auth, { expires: 1, secure: true, sameSite: "Strict" });
+              Cookies.set("session", data.auth, { expires: 1, sameSite: "Strict" });
       
               setErrorMessage("");
-              navigate("/Mentorinterface");
+              navigate("/Mentorinterface",{ replace: true });
             } else {
               setErrorMessage('Enter correct details');
             }
@@ -79,7 +79,7 @@ const Mentorlogin = () => {
           </div>
           <button type="submit" className="btn btn-primary login-btn">Submit</button>
           <p className="back-home">
-            <a href="/mainpage" className="back-home-link">Back to Homepage</a>
+          <Link to="/mainpage">Back to Homepage</Link> 
           </p>
           {errorMessage && <p className="error-text">{errorMessage}</p>}
         </form>

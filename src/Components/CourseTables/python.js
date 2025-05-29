@@ -101,7 +101,7 @@ const Python = () => {
       fetch(`${apiURL}/progress`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId, cid, completedVideos: Array.from(updated)}),
+        body: JSON.stringify({ userId, cid, completedVideos: Array.from(updated),totalVideos: videos.length}),
       })
         .then(res => res.json())
         .then(data => console.log('Progress updated:', data))

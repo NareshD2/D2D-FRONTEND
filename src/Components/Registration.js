@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import './Registration.css'; // Import custom CSS
 import Navbar from './Navbar';
-import { FaCheckCircle, FaExclamationCircle } from 'react-icons/fa'; // Import FontAwesome icons
-import { ClipLoader } from 'react-spinners'; // Import spinner component
+import { FaCheckCircle, FaExclamationCircle } from 'react-icons/fa'; 
+import { ClipLoader } from 'react-spinners'; 
 import apiURL from '../utils';
 const Registration = () => {
   const [name, setName] = useState('');
